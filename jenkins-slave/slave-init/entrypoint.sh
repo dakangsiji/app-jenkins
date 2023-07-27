@@ -16,6 +16,7 @@ curl ${MASTER_URL}/jnlpJars/jenkins-cli.jar -o ~/jenkins-cli.jar
 
 # Delete the node always
 set +e
+java -jar ~/jenkins-cli.jar -auth "${MASTER_USERNAME}:${MASTER_PASSWORD}" -s "${MASTER_URL}" get-node ${NODE_NAME}
 java -jar ~/jenkins-cli.jar -auth "${MASTER_USERNAME}:${MASTER_PASSWORD}" -s "${MASTER_URL}" delete-node ${NODE_NAME}
 set -e
 

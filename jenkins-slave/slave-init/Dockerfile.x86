@@ -1,0 +1,12 @@
+FROM openjdk:11-jre
+MAINTAINER tommylikehu@gmail.com
+USER root
+RUN sed -i "s@http://deb.debian.org@https://repo.huaweicloud.com@g" /etc/apt/sources.list && \
+    apt -y update && \
+    apt -y install curl && \
+    apt -y install jq && \
+    apt -y install xmlstarlet
+
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
