@@ -10,6 +10,7 @@ NUM_EXECUTORS=$5
 WORKING_DIR=$6
 NODE_LABELS=$7
 SHARE_FOLDER=$8
+NODE_DESCRIPTION=$9
 
 # Download CLI jar from the master
 curl ${MASTER_URL}/jnlpJars/jenkins-cli.jar -o ~/jenkins-cli.jar
@@ -24,7 +25,7 @@ set -e
 cat <<EOF | java -jar ~/jenkins-cli.jar -auth "${MASTER_USERNAME}:${MASTER_PASSWORD}" -s "${MASTER_URL}" create-node "${NODE_NAME}" |true
 <slave>
   <name>${NODE_NAME}</name>
-  <description></description>
+  <description>${NODE_DESCRIPTION}</description>
   <remoteFS>${WORKING_DIR}</remoteFS>
   <numExecutors>${NUM_EXECUTORS}</numExecutors>
   <mode>NORMAL</mode>
