@@ -1,0 +1,117 @@
+---
+# statefulset template for create jenkins building node
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: k8s-riscv64-soe
+  namespace: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openeuler-jenkins
+  serviceName: k8s-riscv64-soe
+  template:
+    metadata:
+      labels:
+        app: openeuler-jenkins
+    spec:
+      containers:
+      - command:
+        - /bin/sh
+        - -c
+        - |
+          export JENKINS_SECRET=`cat /home/jenkins/share-config/node_secret.id`;
+          exec jenkins-agent
+        env:
+        - name: TZ
+          value: Asia/Shanghai
+        - name: JENKINS_TUNNEL
+          value: 172.16.2.123:50000
+        - name: JENKINS_AGENT_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: JENKINS_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: JENKINS_AGENT_WORKDIR
+          value: /home/jenkins/agent-working-dir
+        - name: JENKINS_URL
+          value: http://172.16.2.123:8080
+        image: hub.oepkgs.net/oerv-ci/jenkins-agent-gitee:jdk17
+        imagePullPolicy: IfNotPresent
+        name: jenkins-slave
+        resources:
+          requests:
+            cpu: "2"
+            memory: 2000Mi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /home/jenkins/share-config
+          name: jenkins-share-config
+      imagePullSecrets:
+      - name: huawei-swr-image-pull-secret
+      initContainers:
+      - args:
+        - $(JENKINS_URL)
+        - $(JENKINS_USER_NAME)
+        - $(JENKINS_USER_PASSWORD)
+        - $(JENKINS_NODE_NAME)
+        - $(JENKINS_NODE_EXECUTOR_NUMBERS)   # 修改
+        - $(JENKINS_AGENT_WORKDIR)
+        - $(JENKINS_NODE_LABELS)             # 修改
+        - $(JENKINS_SHARE_FOLDER)
+        - $(JENKINS_NODE_DESCRIPTION)        # 新增
+        env:
+        - name: JENKINS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: JENKINS_USER_NAME
+          value: admin
+        - name: JENKINS_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: jenkins-secret
+        - name: JENKINS_AGENT_WORKDIR
+          value: /home/jenkins/agent-working-dir
+        - name: JENKINS_URL
+          value: http://172.16.2.123:8080
+        - name: JENKINS_SHARE_FOLDER
+          value: /home/jenkins/share-config
+        - name: JENKINS_NODE_EXECUTOR_NUMBERS   # 修改
+          value: "1"
+        - name: JENKINS_NODE_LABELS             # 修改
+          value: k8s-riscv64-soe
+        - name: JENKINS_NODE_DESCRIPTION
+          value: "OE_BJ4_k8s mix-cluster_NS jenkins_Sts k8s-riscv64-soe"  # 新增
+        image: swr.cn-north-4.myhuaweicloud.com/opensourceway/common/jenkins-slave-tools-x86:v1.0.20250331
+        imagePullPolicy: Always
+        name: slave-init
+        volumeMounts:
+        - mountPath: /home/jenkins/share-config
+          name: jenkins-share-config
+      - args:
+        - --reset
+        - -p
+        - "yes"
+        - --credential
+        - "yes"
+        image: swr.cn-north-4.myhuaweicloud.com/openeuler/x86-64/oerv/qemu-user-static:latest
+        imagePullPolicy: Always
+        name: qemu-user-static
+        securityContext:
+          privileged: true
+      nodeSelector:
+        jenkins.soe.x86: "true"
+      restartPolicy: Always
+      volumes:
+      - emptyDir: {}
+        name: jenkins-share-config
