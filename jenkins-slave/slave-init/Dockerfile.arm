@@ -1,7 +1,5 @@
-FROM arm64v8/openjdk:11-jre
-
+FROM openjdk:24-ea-17-jdk-slim
 MAINTAINER tommylikehu@gmail.com
-
 USER root
 
 RUN apt update && \
@@ -10,4 +8,5 @@ RUN apt update && \
     apt -y install xmlstarlet
 
 COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
